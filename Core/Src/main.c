@@ -608,20 +608,56 @@ void GereLcdScreen_1(void * argument) {
 	{
 	    STARTING,
 	    MENU,
-	    TEST_1
+	    TEST_1,
+		TEST_2,
+		TEST_3
 	};
+
+	enum Etats etatCourant = STARTING;
+
+	//Etats = STARTING;
     LCD_begin(16, 2, 1);
 
     /* Infinite loop */
     for (;;) {
-		/*switch (Etats) {
+		switch (etatCourant) {
 			case STARTING:
-
+				for (int var = 0; var <= 16; ++var) {
+					LCD_clear();
+					osDelay(200);
+				}
 				break;
 			case MENU:
+				LCD_clear();{
+				/*if(){
 
-				break;
+				}
+				else if (){
+
+				}
+				else {
+
+				}
+				break;*/
 			case TEST_1:
+				LCD_clear();
+
+		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+		        LCD_print("Marius chibre", sizeof("Marius chibre"));
+
+		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+		        LCD_clear();
+				break;
+			case TEST_2:
+				LCD_clear();
+
+		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+		        LCD_print("Marius chibre", sizeof("Marius chibre"));
+
+		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+		        LCD_clear();
+				break;
+			case TEST_3:
 				LCD_clear();
 
 		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
@@ -632,9 +668,10 @@ void GereLcdScreen_1(void * argument) {
 				break;
 			default:
 				break;
-		}*/
+		}
+    	LCD_setRGB(255,0,0);
         osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-        LCD_print("Marius chibre", sizeof("Marius chibre"));
+        LCD_print("Marius chibre", sizeof("Marius chibre")-1);
         osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
         LCD_clear();
     }
