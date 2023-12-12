@@ -26,6 +26,7 @@
 #include "rgb_lcd.h"
 #include "stdio.h"
 #include "string.h"
+#include "stdlib.h"
  //#include "cmsis_os2.h"
 
 /* USER CODE END Includes */
@@ -92,7 +93,7 @@ osThreadId_t gerePoten_AD0Handle;
 const osThreadAttr_t gerePoten_AD0_attributes = {
   .name = "gerePoten_AD0",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityLow2,
 };
 /* Definitions for personnalDelays */
 osThreadId_t personnalDelaysHandle;
@@ -106,7 +107,12 @@ osThreadId_t stateDiagramHandle;
 const osThreadAttr_t stateDiagram_attributes = {
   .name = "stateDiagram",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityRealtime,
+  .priority = (osPriority_t) osPriorityNormal1,
+};
+/* Definitions for potenValue */
+osMessageQueueId_t potenValueHandle;
+const osMessageQueueAttr_t potenValue_attributes = {
+  .name = "potenValue"
 };
 /* Definitions for semaphoreTest */
 osSemaphoreId_t semaphoreTestHandle;
@@ -141,6 +147,8 @@ char soundSensorValue_string[20];
 
 int potenValueTemp = 0;
 
+int idGame = 0;
+
 uint8_t fullcharacter[] = {
         0b11111,
 		0b11111,
@@ -165,6 +173,9 @@ uint8_t emptycharacter[] = {
 
 // var for the firsts passages
 int tempFirst = 0;
+
+int bestRecord = 0;
+char bestRecord_string[20];
 
 /* USER CODE END PV */
 
@@ -194,6 +205,18 @@ void menuLCD(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void displayScores(void){
+	while(1){
+		LCD_setCursor(0, 0);
+		LCD_print(" MEILLEUR SCORE ", sizeof("HUMAN SPEED TEST")-1);
+		osDelay(500);
+		LCD_setCursor(0, 1);
+		sprintf(bestRecord_string, "%d", bestRecord);
+		LCD_print(bestRecord_string, sizeof(bestRecord_string)-1);
+		osDelay(500);
+	}
+}
 
 void startingLCD(void){
 
@@ -233,7 +256,7 @@ void startingLCD(void){
 
 	LCD_setCursor(0,1);
 	LCD_print("-- JOS MAR DAV--", sizeof("-- JOS MAR DAV--")-1);
-	osDelay(2000);
+	osDelay(1000);
 
 	for (int iBcl = 0; iBcl <= 24; ++iBcl) {
 
@@ -264,7 +287,7 @@ void startingLCD(void){
 
 void menuLCD(void){
 
-	if (tempFirst == 0){
+	/*if (tempFirst == 0){
 	    LCD_createChar(0,fullcharacter);
 	    LCD_setCursor(1,0);
 	    LCD_print("     MENU     ", 15);
@@ -278,57 +301,47 @@ void menuLCD(void){
 	    LCD_setCursor(1,16);
 	    LCD_write(0);
 	    tempFirst++;
-	}
+	}*/
 
 
 
+    osMessageQueueGet(potenValueHandle, &potenValue, 0, osWaitForever);
 
-    potenValueTemp = potenValue;
-    if (potenValue < 1024){
-    	while(potenValue < 1024){
-    		LCD_setCursor(1,1);
-    		LCD_print("  0  X  X  X  ", 15);
-    		//osSemaphoreAcquire(semaphoreMenuTimerTempHandle, 500);
-    		osDelay(1000);
-			LCD_setCursor(1,1);
-			LCD_print("    JEU 1     ", 15);
-			//osSemaphoreAcquire(semaphoreMenuTimerTempHandle, 500);
-			osDelay(1000);
+    if (abs((potenValue - potenValueTemp)) > 10){
+    	potenValueTemp = potenValue;
+    	if (potenValue < 1024){
+    			LCD_setCursor(0,0);
+    			LCD_print("     JEU 1      ", sizeof("   0  X  X  X   "));
+    			LCD_setCursor(0,1);
+    			LCD_print("   0  X  X  X   ", sizeof("   0  X  X  X   "));
+    			idGame = 1;
     	}
-    }
-    else if (potenValue < 2048){
-    	while((potenValue < 2048) && (potenValue >= 1024)){
-    		LCD_setCursor(1,1);
-    		LCD_print("  X  0  X  X  ", 15);
-			osDelay(1000);
-			LCD_setCursor(1,1);
-			LCD_print("    JEU 2     ", 15);
-			osDelay(1000);
+    	else if (potenValue < 2048){
+    			LCD_setCursor(0,1);
+    			LCD_print("   X  0  X  X   ", sizeof("   X  X  X  0   "));
+    			LCD_setCursor(0,0);
+    			LCD_print("     JEU 2      ", sizeof("   X  X  X  0   "));
+    			idGame = 2;
     	}
+    	else if (potenValue < 3072){
+    			LCD_setCursor(0,1);
+    			LCD_print("   X  X  0  X   ", sizeof("   X  X  X  0   "));
+    			LCD_setCursor(0,0);
+    			LCD_print("     JEU 3      ", sizeof("   X  X  X  0   "));
+    			idGame = 3;
+    	}
+    	else {
+    			LCD_setCursor(0,1);
+    			LCD_print("   X  X  X  0   ", sizeof("   X  X  X  0   "));
+    			LCD_setCursor(0,0);
+    			LCD_print("     SCORES     ", sizeof("   X  X  X  0   "));
+    			idGame = 4;
+    	}
+    	osDelay(1);
+    }
 
-    }
-    else if (potenValue < 3072){
-    	while((potenValue < 3072) && (potenValue >= 2048)){
-    		LCD_setCursor(1,1);
-        	LCD_print("  X  X  0  X  ", 15);
-        	osDelay(1000);
-        	LCD_setCursor(1,1);
-        	LCD_print("    JEU 3     ", 15);
-        	osDelay(1000);
-    	}
-    }
-    else {
-    	while((potenValue > 3072)){
-    		LCD_setCursor(1,1);
-        	LCD_print("  X  X  X  0  ", 17);
-        	osDelay(1000);
-        	LCD_setCursor(1,1);
-        	LCD_print("    RESULT    ", 17);
-        	osDelay(1000);
-    	}
-    }
-    osDelay(10);
 }
+
 
 /* USER CODE END 0 */
 
@@ -370,6 +383,7 @@ int main(void)
     //LCD_begin(16, 2, 1);
     //LCD_print("AB", 2);
 
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -393,6 +407,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_TIMERS */
     /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of potenValue */
+  potenValueHandle = osMessageQueueNew (16, sizeof(uint16_t), &potenValue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
@@ -820,9 +838,9 @@ void GereLeds_1(void *argument)
 
         if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 1) {
             buttonRelease = 1;
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 0);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
         }
         else {
             if (buttonRelease == 1) {
@@ -831,9 +849,9 @@ void GereLeds_1(void *argument)
                 osSemaphoreRelease(semaphoreTestHandle);
             }
             button = 1;
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 0);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
         }
 
 
@@ -857,7 +875,7 @@ void GereLcdScreen_1(void *argument)
 
 
 	//Etats = STARTING;
-    LCD_begin(16, 2, 0);
+
 
     /* Infinite loop */
     for (;;) {
@@ -1042,6 +1060,7 @@ void changeRGBs(void *argument)
 		  	  LCD_setRGB(R,G,B);
 		  	  osDelay(10);
 	  }
+	  defilColors();
 
 
   }
@@ -1065,6 +1084,8 @@ void getValueAdc(void *argument)
   	HAL_ADC_PollForConversion(&hadc1, 20);
   	potenValue = HAL_ADC_GetValue(&hadc1);
   	sprintf(potenValue_string, "%d", potenValue);
+  	osMessageQueuePut(potenValueHandle,&potenValue,0,0);
+  	osDelay(1);
   	//HAL_ADC_stop
 
   }
@@ -1084,12 +1105,12 @@ void gereDelays(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  if(abs((potenValue - potenValueTemp)) > 20){
+	  /*if(abs((potenValue - potenValueTemp)) > 20){
           HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
 		  osSemaphoreRelease(semaphoreMenuTimerTempHandle);
-	  }
+	  }*/
     osDelay(500);
   }
   /* USER CODE END gereDelays */
@@ -1106,38 +1127,57 @@ void gereStateDiagram(void *argument)
 {
   /* USER CODE BEGIN gereStateDiagram */
   /* Infinite loop */
+	LCD_begin(16, 2, 0);
   for(;;)
   {
 	  switch (etatCourant) {
 			case STARTING:
+
+				/*menuLCD();
+				osDelay(1);*/
 				ignoreSemaphore = 1;
 				startingLCD();
 				ignoreSemaphore = 0;
 				osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
 				etatCourant = MENU;
+
 				break;
 			case MENU:
-				LCD_clear();
-				/*if(osSemaphoreAcquire(semaphoreTestHandle, osWaitForever) && test = 1){
+				//LCD_clear();
+				menuLCD();
 
+				if(osSemaphoreAcquire(semaphoreTestHandle, 1) == osOK){
+					switch(idGame){
+						case 1:
+							etatCourant = TEST_1;
+							break;
+						case 2 :
+							etatCourant = TEST_2;
+							break;
+						case 3 :
+							etatCourant = TEST_3;
+							break;
+						case 4 :
+							etatCourant = SCORES;
+							break;
+						default :
+							break;
+						}
 				}
-				if(osSemaphoreAcquire(semaphoreTestHandle, osWaitForever) && test = 1){
 
-				}
-				if(osSemaphoreAcquire(semaphoreTestHandle, osWaitForever) && test = 1){
 
-				}
-				if(osSemaphoreAcquire(semaphoreTestHandle, osWaitForever) && test = 1){
-
-				}*/
 				break;
 			case TEST_1:
+
 				break;
 			case TEST_2:
+
 				break;
 			case TEST_3:
+
 				break;
 			case SCORES:
+				displayScores();
 				break;
 			default:
 				break;
