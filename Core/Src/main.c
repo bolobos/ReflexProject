@@ -206,6 +206,36 @@ void menuLCD(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+
+void displayTest1(void){
+    ignoreSemaphore = 1;
+    LCD_clear();
+    LCD_home();
+    LCD_setCursor(0, 0);
+    LCD_print("      JEU 1     ", sizeof("HUMAN SPEED TEST")-1);
+    LCD_setCursor(0, 1);
+    LCD_print("                ", sizeof("HUMAN SPEED TEST")-1);
+    osDelay(1000);
+    LCD_setCursor(0, 0);
+    LCD_print("        3       ", sizeof("HUMAN SPEED TEST")-1);
+    osDelay(1000);
+    LCD_setCursor(0, 0);
+    LCD_print("        2       ", sizeof("HUMAN SPEED TEST")-1);
+    osDelay(1000);
+    LCD_setCursor(0, 0);
+    LCD_print("        1       ", sizeof("HUMAN SPEED TEST")-1);
+    osDelay(1000);
+
+
+    LCD_print("     START      ", sizeof("HUMAN SPEED TEST")-1);
+
+    ignoreSemaphore = 0;
+    HAL_TIM_Base_Start_IT(&htim2);
+
+    osDelay(osWaitForever);
+}
+
 void displayScores(void){
 	while(1){
 		LCD_setCursor(0, 0);
@@ -382,7 +412,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
     //LCD_begin(16, 2, 1);
     //LCD_print("AB", 2);
-
+  HAL_TIM_Base_Start_IT(&htim2);
 
   /* USER CODE END 2 */
 
@@ -482,16 +512,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  RCC_OscInitStruct.PLL.PLLR = 2;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -501,12 +524,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -669,9 +692,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
+  htim2.Init.Prescaler = 100;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 40000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -838,9 +861,9 @@ void GereLeds_1(void *argument)
 
         if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 1) {
             buttonRelease = 1;
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 0);
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
         }
         else {
             if (buttonRelease == 1) {
@@ -849,9 +872,9 @@ void GereLeds_1(void *argument)
                 osSemaphoreRelease(semaphoreTestHandle);
             }
             button = 1;
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 0);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
         }
 
 
@@ -1127,9 +1150,10 @@ void gereStateDiagram(void *argument)
 {
   /* USER CODE BEGIN gereStateDiagram */
   /* Infinite loop */
-	LCD_begin(16, 2, 0);
+    LCD_begin(16, 2, 0);
   for(;;)
   {
+      etatCourant = TEST_3;
 	  switch (etatCourant) {
 			case STARTING:
 
@@ -1145,6 +1169,8 @@ void gereStateDiagram(void *argument)
 			case MENU:
 				//LCD_clear();
 				menuLCD();
+				LCD_setCursor(0, 1);
+				LCD_print("                  ", sizeof("                  ")-1);
 
 				if(osSemaphoreAcquire(semaphoreTestHandle, 1) == osOK){
 					switch(idGame){
@@ -1174,7 +1200,15 @@ void gereStateDiagram(void *argument)
 
 				break;
 			case TEST_3:
+			    int aye = 0 ;
+			    char aye_string[16];
+			    long int aye_res;
 
+                LCD_setCursor(0,1);
+                aye_res = bestRecord * 1000000 + ((TIM2->CNT)/4);
+                sprintf(aye_string, "%d", aye_res);
+                LCD_print(aye_string, sizeof(aye_string));
+			    osDelay(550);
 				break;
 			case SCORES:
 				displayScores();
@@ -1204,7 +1238,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == htim2.Instance)
+  {
+      //HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
+      //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10,1);
+      bestRecord++;
+  }
   /* USER CODE END Callback 1 */
 }
 
@@ -1234,6 +1273,7 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
