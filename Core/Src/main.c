@@ -27,6 +27,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include <time.h>
  //#include "cmsis_os2.h"
 
 /* USER CODE END Includes */
@@ -131,9 +132,9 @@ enum Etats
     STARTING,
     MENU,
     TEST_1,
-	TEST_2,
-	TEST_3,
-	SCORES
+    TEST_2,
+    TEST_3,
+    SCORES
 };
 
 enum Etats etatCourant = STARTING;
@@ -151,24 +152,24 @@ int idGame = 0;
 
 uint8_t fullcharacter[] = {
         0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111,
-		0b11111
+        0b11111,
+        0b11111,
+        0b11111,
+        0b11111,
+        0b11111,
+        0b11111,
+        0b11111
     };
 
 uint8_t emptycharacter[] = {
         0b00000,
-		0b00000,
-		0b00000,
-		0b00000,
-		0b00000,
-		0b00000,
-		0b00000,
-		0b00000
+        0b00000,
+        0b00000,
+        0b00000,
+        0b00000,
+        0b00000,
+        0b00000,
+        0b00000
     };
 
 // var for the firsts passages
@@ -206,11 +207,10 @@ void menuLCD(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-
-
 void displayTest1(void){
     ignoreSemaphore = 1;
     LCD_clear();
+
     LCD_home();
     LCD_setCursor(0, 0);
     LCD_print("      JEU 1     ", sizeof("HUMAN SPEED TEST")-1);
@@ -226,148 +226,180 @@ void displayTest1(void){
     LCD_setCursor(0, 0);
     LCD_print("        1       ", sizeof("HUMAN SPEED TEST")-1);
     osDelay(1000);
+    LCD_setCursor(0, 0);
+    LCD_print("      WAIT      ", sizeof("HUMAN SPEED TEST")-1);
+    osDelay(1000);
 
 
-    LCD_print("     START      ", sizeof("HUMAN SPEED TEST")-1);
+    int cpt;
+    srand(time(NULL));   // Initialization, should only be called once.
+    int r = rand();      // Returns a pseudo-random integer between 0 and RAND_MAX.
+    r = r % 5000000;
 
+    char aye_string[16];
+    int aye_res;
+    bestRecord = 0;
+    TIM2->CNT = 0;
+    while(r >= cpt){
+        cpt = (bestRecord*1000000)+((TIM2->CNT)/4);
+    }
+    LCD_setCursor(0, 0);
+    LCD_print("     PUSH       ", sizeof("HUMAN SPEED TEST")-1);
+    bestRecord = 0;
+    TIM2->CNT = 0;
+    cpt = 0;
     ignoreSemaphore = 0;
-    HAL_TIM_Base_Start_IT(&htim2);
+    int iVerif = osSemaphoreAcquire(semaphoreTestHandle, 5000);
+    if(iVerif == osOK){
 
-    osDelay(osWaitForever);
+        cpt = (bestRecord*1000000)+((TIM2->CNT)/4);
+        aye_res = cpt;
+
+        sprintf(aye_string, "%d", aye_res);
+        LCD_setCursor(0,1);
+        LCD_print(aye_string, sizeof("     Press      ")-1);
+        osDelay(5000);
+
+    }
+    else if(iVerif == osErrorTimeout){
+        LCD_setCursor(0,1);
+        LCD_print("TROP LONG FRERO", sizeof("TROP LONG FRERO"));
+        osDelay(5000);
+    }
 }
 
 void displayScores(void){
-	while(1){
-		LCD_setCursor(0, 0);
-		LCD_print(" MEILLEUR SCORE ", sizeof("HUMAN SPEED TEST")-1);
-		osDelay(500);
-		LCD_setCursor(0, 1);
-		sprintf(bestRecord_string, "%d", bestRecord);
-		LCD_print(bestRecord_string, sizeof(bestRecord_string)-1);
-		osDelay(500);
-	}
+    while(1){
+        LCD_setCursor(0, 0);
+        LCD_print(" MEILLEUR SCORE ", sizeof("HUMAN SPEED TEST")-1);
+        osDelay(500);
+        LCD_setCursor(0, 1);
+        sprintf(bestRecord_string, "%d", bestRecord);
+        LCD_print(bestRecord_string, sizeof(bestRecord_string)-1);
+        osDelay(500);
+    }
 }
 
 void startingLCD(void){
 
-	LCD_clear();
-	LCD_home();
-	LCD_setCursor(0, 0);
-	LCD_print("HUMAN SPEED TEST", sizeof("HUMAN SPEED TEST")-1);
-	//LCD_setCursor(0, 1);
-	osDelay(1000);
+    LCD_clear();
+    LCD_home();
+    LCD_setCursor(0, 0);
+    LCD_print("HUMAN SPEED TEST", sizeof("HUMAN SPEED TEST")-1);
+    //LCD_setCursor(0, 1);
+    osDelay(1000);
 
-	LCD_createChar(0,fullcharacter);
-	LCD_createChar(1,emptycharacter);
+    LCD_createChar(0,fullcharacter);
+    LCD_createChar(1,emptycharacter);
 
-	for (int iBcl = 0; iBcl <= 19; ++iBcl) {
-		LCD_setCursor(iBcl,1);
-		LCD_write(255);
-		if(iBcl>=3){
-			LCD_setCursor(iBcl-3,1);
-			LCD_write(1);
-		}
-		osDelay(30);
-	}
+    for (int iBcl = 0; iBcl <= 19; ++iBcl) {
+        LCD_setCursor(iBcl,1);
+        LCD_write(255);
+        if(iBcl>=3){
+            LCD_setCursor(iBcl-3,1);
+            LCD_write(1);
+        }
+        osDelay(30);
+    }
 
-	LCD_setCursor(0,1);
-	LCD_print("    SAE 2023    ", sizeof("    SAE 2023    ")-1);
-	osDelay(1000);
+    LCD_setCursor(0,1);
+    LCD_print("    SAE 2023    ", sizeof("    SAE 2023    ")-1);
+    osDelay(1000);
 
-	for (int iBcl = 0; iBcl <= 19; ++iBcl) {
-		LCD_setCursor(iBcl,1);
-		LCD_write(255);
-		if(iBcl>=3){
-			LCD_setCursor(iBcl-3,1);
-			LCD_write(1);
-		}
-		osDelay(30);
-	}
+    for (int iBcl = 0; iBcl <= 19; ++iBcl) {
+        LCD_setCursor(iBcl,1);
+        LCD_write(255);
+        if(iBcl>=3){
+            LCD_setCursor(iBcl-3,1);
+            LCD_write(1);
+        }
+        osDelay(30);
+    }
 
-	LCD_setCursor(0,1);
-	LCD_print("-- JOS MAR DAV--", sizeof("-- JOS MAR DAV--")-1);
-	osDelay(1000);
+    LCD_setCursor(0,1);
+    LCD_print("-- JOS MAR DAV--", sizeof("-- JOS MAR DAV--")-1);
+    osDelay(1000);
 
-	for (int iBcl = 0; iBcl <= 24; ++iBcl) {
-
-
-		if (iBcl >=8){
-			LCD_setCursor(iBcl-8,0);
-			LCD_write(1);
-			LCD_setCursor(iBcl-8,1);
-			LCD_write(1);
-
-		}
-
-		if (iBcl <=16){
-			LCD_setCursor(iBcl,0);
-			LCD_write(255);
-			LCD_setCursor(iBcl,1);
-			LCD_write(255);
-		}
+    for (int iBcl = 0; iBcl <= 24; ++iBcl) {
 
 
-		osDelay(30);
-	}
-	LCD_setCursor(0,0);
-	LCD_print("     Press      ", sizeof("     Press      ")-1);
-	LCD_setCursor(0,1);
-	LCD_print("  to continue   ", sizeof("  to continue   ")-1);
+        if (iBcl >=8){
+            LCD_setCursor(iBcl-8,0);
+            LCD_write(1);
+            LCD_setCursor(iBcl-8,1);
+            LCD_write(1);
+
+        }
+
+        if (iBcl <=16){
+            LCD_setCursor(iBcl,0);
+            LCD_write(255);
+            LCD_setCursor(iBcl,1);
+            LCD_write(255);
+        }
+
+
+        osDelay(30);
+    }
+    LCD_setCursor(0,0);
+    LCD_print("     Press      ", sizeof("     Press      ")-1);
+    LCD_setCursor(0,1);
+    LCD_print("  to continue   ", sizeof("  to continue   ")-1);
 }
 
 void menuLCD(void){
 
-	/*if (tempFirst == 0){
-	    LCD_createChar(0,fullcharacter);
-	    LCD_setCursor(1,0);
-	    LCD_print("     MENU     ", 15);
+    /*if (tempFirst == 0){
+        LCD_createChar(0,fullcharacter);
+        LCD_setCursor(1,0);
+        LCD_print("     MENU     ", 15);
 
-	    LCD_setCursor(0,0);
-	    LCD_write(0);
-	    LCD_setCursor(1,0);
-	    LCD_write(0);
-	    LCD_setCursor(0,16);
-	    LCD_write(0);
-	    LCD_setCursor(1,16);
-	    LCD_write(0);
-	    tempFirst++;
-	}*/
+        LCD_setCursor(0,0);
+        LCD_write(0);
+        LCD_setCursor(1,0);
+        LCD_write(0);
+        LCD_setCursor(0,16);
+        LCD_write(0);
+        LCD_setCursor(1,16);
+        LCD_write(0);
+        tempFirst++;
+    }*/
 
 
 
     osMessageQueueGet(potenValueHandle, &potenValue, 0, osWaitForever);
 
     if (abs((potenValue - potenValueTemp)) > 10){
-    	potenValueTemp = potenValue;
-    	if (potenValue < 1024){
-    			LCD_setCursor(0,0);
-    			LCD_print("     JEU 1      ", sizeof("   0  X  X  X   "));
-    			LCD_setCursor(0,1);
-    			LCD_print("   0  X  X  X   ", sizeof("   0  X  X  X   "));
-    			idGame = 1;
-    	}
-    	else if (potenValue < 2048){
-    			LCD_setCursor(0,1);
-    			LCD_print("   X  0  X  X   ", sizeof("   X  X  X  0   "));
-    			LCD_setCursor(0,0);
-    			LCD_print("     JEU 2      ", sizeof("   X  X  X  0   "));
-    			idGame = 2;
-    	}
-    	else if (potenValue < 3072){
-    			LCD_setCursor(0,1);
-    			LCD_print("   X  X  0  X   ", sizeof("   X  X  X  0   "));
-    			LCD_setCursor(0,0);
-    			LCD_print("     JEU 3      ", sizeof("   X  X  X  0   "));
-    			idGame = 3;
-    	}
-    	else {
-    			LCD_setCursor(0,1);
-    			LCD_print("   X  X  X  0   ", sizeof("   X  X  X  0   "));
-    			LCD_setCursor(0,0);
-    			LCD_print("     SCORES     ", sizeof("   X  X  X  0   "));
-    			idGame = 4;
-    	}
-    	osDelay(1);
+        potenValueTemp = potenValue;
+        if (potenValue < 1024){
+            LCD_setCursor(0,0);
+            LCD_print("     JEU 1      ", sizeof("   X  0  0  0   "));
+            LCD_setCursor(0,1);
+            LCD_print("   X  0  0  0   ", sizeof("   X  0  0  0   "));
+            idGame = 1;
+        }
+        else if (potenValue < 2048){
+            LCD_setCursor(0,1);
+            LCD_print("   0  X  0  0   ", sizeof("   0  0  0  X   "));
+            LCD_setCursor(0,0);
+            LCD_print("     JEU 2      ", sizeof("   0  0  0  X   "));
+            idGame = 2;
+        }
+        else if (potenValue < 3072){
+            LCD_setCursor(0,1);
+            LCD_print("   0  0  X  0   ", sizeof("   0  0  0  X   "));
+            LCD_setCursor(0,0);
+            LCD_print("     JEU 3      ", sizeof("   0  0  0  X   "));
+            idGame = 3;
+        }
+        else {
+            LCD_setCursor(0,1);
+            LCD_print("   0  0  0  X   ", sizeof("   0  0  0  X   "));
+            LCD_setCursor(0,0);
+            LCD_print("     SCORES     ", sizeof("   0  0  0  X   "));
+            idGame = 4;
+        }
+        osDelay(1);
     }
 
 }
@@ -412,7 +444,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
     //LCD_begin(16, 2, 1);
     //LCD_print("AB", 2);
-  HAL_TIM_Base_Start_IT(&htim2);
+
 
   /* USER CODE END 2 */
 
@@ -512,9 +544,16 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 16;
+  RCC_OscInitStruct.PLL.PLLN = 160;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -524,12 +563,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -694,7 +733,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 100;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 40000;
+  htim2.Init.Period = 400000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -861,9 +900,9 @@ void GereLeds_1(void *argument)
 
         if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == 1) {
             buttonRelease = 1;
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
-			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 0);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
         }
         else {
             if (buttonRelease == 1) {
@@ -872,9 +911,9 @@ void GereLeds_1(void *argument)
                 osSemaphoreRelease(semaphoreTestHandle);
             }
             button = 1;
-            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 0);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
         }
 
 
@@ -897,95 +936,96 @@ void GereLcdScreen_1(void *argument)
   /* USER CODE BEGIN GereLcdScreen_1 */
 
 
-	//Etats = STARTING;
+    //Etats = STARTING;
 
 
     /* Infinite loop */
     for (;;) {
-		/*switch (etatCourant) {
-			case STARTING:
-				for (int var = 0; var <= 16; ++var) {
-					LCD_clear();
-					osDelay(200);
-				}
-				break;
-			case MENU:
-				LCD_clear();
-				/*if(){
+        osDelay(1);
+        /*switch (etatCourant) {
+            case STARTING:
+                for (int var = 0; var <= 16; ++var) {
+                    LCD_clear();
+                    osDelay(200);
+                }
+                break;
+            case MENU:
+                LCD_clear();
+                /*if(){
 
-				}
-				else if (){
+                }
+                else if (){
 
-				}
-				else {
+                }
+                else {
 
-				}
-				break;
-			case TEST_1:
-				LCD_clear();
+                }
+                break;
+            case TEST_1:
+                LCD_clear();
 
-		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-		        LCD_print("Marius chibre", sizeof("Marius chibre"));
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                LCD_print("Marius chibre", sizeof("Marius chibre"));
 
-		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-		        LCD_clear();
-				break;
-			case TEST_2:
-				LCD_clear();
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                LCD_clear();
+                break;
+            case TEST_2:
+                LCD_clear();
 
-		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-		        LCD_print("Marius chibre", sizeof("Marius chibre"));
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                LCD_print("Marius chibre", sizeof("Marius chibre"));
 
-		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-		        LCD_clear();
-				break;
-			case TEST_3:
-				LCD_clear();
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                LCD_clear();
+                break;
+            case TEST_3:
+                LCD_clear();
 
-		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-		        LCD_print("Marius chibre", sizeof("Marius chibre"));
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                LCD_print("Marius chibre", sizeof("Marius chibre"));
 
-		        osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-		        LCD_clear();
-				break;
-			default:
-				break;
-		}*/
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                LCD_clear();
+                break;
+            default:
+                break;
+        }*/
 
-		/*for (int var = 0; var <= 16; ++var) {
-			for (int var = 0; var <= 16; ++var) {
-				LCD_clear();
-				if(){
+        /*for (int var = 0; var <= 16; ++var) {
+            for (int var = 0; var <= 16; ++var) {
+                LCD_clear();
+                if(){
 
-				}
-				osDelay(200);
-			}
-		}*/
-
-
-
+                }
+                osDelay(200);
+            }
+        }*/
 
 
-        	/*if(){
 
-        	}
-        	ignoreSemaphore = 0;
-        	osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+
+
+            /*if(){
+
+            }
+            ignoreSemaphore = 0;
+            osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
 
             LCD_clear();*/
 
 
 
-        	//LCD_print(0, 4);
+            //LCD_print(0, 4);
 
-        	/*HAL_ADC_Start(&hadc2);
-        	HAL_ADC_PollForConversion(&hadc2,20);
-        	soundSensorValue = HAL_ADC_GetValue(&hadc2);
-        	sprintf(soundSensorValue_string, "%d", soundSensorValue_string);
-        	LCD_setCursor(0,0);
-			LCD_print(soundSensorValue_string);
-        	osDelay(100);
-        	LCD_createChar(0,emptyCharacter);*/
+            /*HAL_ADC_Start(&hadc2);
+            HAL_ADC_PollForConversion(&hadc2,20);
+            soundSensorValue = HAL_ADC_GetValue(&hadc2);
+            sprintf(soundSensorValue_string, "%d", soundSensorValue_string);
+            LCD_setCursor(0,0);
+            LCD_print(soundSensorValue_string);
+            osDelay(100);
+            LCD_createChar(0,emptyCharacter);*/
 
         /*LCD_setCursor(0,0);
         int g = sizeof("      MENU       ");
@@ -994,22 +1034,22 @@ void GereLcdScreen_1(void *argument)
 
         LCD_print(yo, sizeof(yo)-1);*/
 
-    	///////////////////////////////////////////////////////////////////////////s
+        ///////////////////////////////////////////////////////////////////////////s
 
 
         ///////////////////////////////////////////////////////////////////////////
 
         /*LCD_setCursor(0,0);
-		LCD_print(potenValue_string, 4);
-		osDelay(100);
-		LCD_createChar(0,emptyCharacter);*/
+        LCD_print(potenValue_string, 4);
+        osDelay(100);
+        LCD_createChar(0,emptyCharacter);*/
 
         /*void LCD_print(char* data, uint8_t size){
-        	while(size>0){
-        		LCD_write(data[0]);
-        		data++;
-        		size--;
-        	}
+            while(size>0){
+                LCD_write(data[0]);
+                data++;
+                size--;
+            }
         }*/
 
         //LCD_write(255);
@@ -1030,60 +1070,60 @@ void GereLcdScreen_1(void *argument)
 void changeRGBs(void *argument)
 {
   /* USER CODE BEGIN changeRGBs */
-	  int R = 0;
-	  int G = 100;
-	  int B = 200;
-  	  int temp1 = 0;
-	  int temp2 = 0;
-	  int temp3 = 0;
+      int R = 0;
+      int G = 100;
+      int B = 200;
+      int temp1 = 0;
+      int temp2 = 0;
+      int temp3 = 0;
   /* Infinite loop */
   for(;;)
   {
 
-	  void defilColors(){
-		  if (temp1 == 0){
-		  		if(R == 254){
-		  			temp1 = 1;
-		  		}
-		  		R++;
-		  	  }
-		  	  else{
-		  		if(R == 1){
-		  			temp1 = 0;
-		  		}
-		  		R--;
-		  	  }
+      void defilColors(){
+          if (temp1 == 0){
+                if(R == 254){
+                    temp1 = 1;
+                }
+                R++;
+              }
+              else{
+                if(R == 1){
+                    temp1 = 0;
+                }
+                R--;
+              }
 
-		  	  if (temp2 == 0){
-		  		if(G == 254){
-		  			temp2 = 1;
-		  		}
-		  		G++;
-		  	  }
-		  	  else{
-		  		if(G == 1){
-		  			temp2 = 0;
-		  		}
-		  		G--;
-		  	  }
+              if (temp2 == 0){
+                if(G == 254){
+                    temp2 = 1;
+                }
+                G++;
+              }
+              else{
+                if(G == 1){
+                    temp2 = 0;
+                }
+                G--;
+              }
 
-		  	  if (temp3 == 0){
-		  		if(B == 254){
-		  			temp3 = 1;
-		  		}
-		  		B++;
-		  	  }
-		  	  else{
-		  		if(B == 1){
-		  			temp3 = 0;
-		  		}
-		  		B--;
-		  	  }
+              if (temp3 == 0){
+                if(B == 254){
+                    temp3 = 1;
+                }
+                B++;
+              }
+              else{
+                if(B == 1){
+                    temp3 = 0;
+                }
+                B--;
+              }
 
-		  	  LCD_setRGB(R,G,B);
-		  	  osDelay(10);
-	  }
-	  defilColors();
+              LCD_setRGB(R,G,B);
+              osDelay(10);
+      }
+      defilColors();
 
 
   }
@@ -1103,13 +1143,13 @@ void getValueAdc(void *argument)
   /* Infinite loop */
   for(;;)
   {
-  	HAL_ADC_Start(&hadc1);
-  	HAL_ADC_PollForConversion(&hadc1, 20);
-  	potenValue = HAL_ADC_GetValue(&hadc1);
-  	sprintf(potenValue_string, "%d", potenValue);
-  	osMessageQueuePut(potenValueHandle,&potenValue,0,0);
-  	osDelay(1);
-  	//HAL_ADC_stop
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, 20);
+    potenValue = HAL_ADC_GetValue(&hadc1);
+    sprintf(potenValue_string, "%d", potenValue);
+    osMessageQueuePut(potenValueHandle,&potenValue,0,0);
+    osDelay(1);
+    //HAL_ADC_stop
 
   }
   /* USER CODE END getValueAdc */
@@ -1128,12 +1168,12 @@ void gereDelays(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  /*if(abs((potenValue - potenValueTemp)) > 20){
+      /*if(abs((potenValue - potenValueTemp)) > 20){
           HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, 1);
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
           HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
-		  osSemaphoreRelease(semaphoreMenuTimerTempHandle);
-	  }*/
+          osSemaphoreRelease(semaphoreMenuTimerTempHandle);
+      }*/
     osDelay(500);
   }
   /* USER CODE END gereDelays */
@@ -1146,77 +1186,74 @@ void gereDelays(void *argument)
 * @retval None
 */
 /* USER CODE END Header_gereStateDiagram */
+/* USER CODE END Header_gereStateDiagram */
 void gereStateDiagram(void *argument)
 {
   /* USER CODE BEGIN gereStateDiagram */
   /* Infinite loop */
     LCD_begin(16, 2, 0);
+    HAL_TIM_Base_Start_IT(&htim2);
   for(;;)
   {
-      etatCourant = TEST_3;
-	  switch (etatCourant) {
-			case STARTING:
+      switch (etatCourant) {
+            case STARTING:
 
-				/*menuLCD();
-				osDelay(1);*/
-				ignoreSemaphore = 1;
-				startingLCD();
-				ignoreSemaphore = 0;
-				osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
-				etatCourant = MENU;
+                /*menuLCD();
+                osDelay(1);*/
+                ignoreSemaphore = 1;
+                startingLCD();
+                ignoreSemaphore = 0;
+                osSemaphoreAcquire(semaphoreTestHandle, osWaitForever);
+                etatCourant = MENU;
 
-				break;
-			case MENU:
-				//LCD_clear();
-				menuLCD();
-				LCD_setCursor(0, 1);
-				LCD_print("                  ", sizeof("                  ")-1);
+                break;
+            case MENU:
+                //LCD_clear();
+                menuLCD();
 
-				if(osSemaphoreAcquire(semaphoreTestHandle, 1) == osOK){
-					switch(idGame){
-						case 1:
-							etatCourant = TEST_1;
-							break;
-						case 2 :
-							etatCourant = TEST_2;
-							break;
-						case 3 :
-							etatCourant = TEST_3;
-							break;
-						case 4 :
-							etatCourant = SCORES;
-							break;
-						default :
-							break;
-						}
-				}
+                if(osSemaphoreAcquire(semaphoreTestHandle, 1) == osOK){
+                    switch(idGame){
+                        case 1:
+                            etatCourant = TEST_1;
+                            break;
+                        case 2 :
+                            etatCourant = TEST_2;
+                            break;
+                        case 3 :
+                            etatCourant = TEST_3;
+                            break;
+                        case 4 :
+                            etatCourant = SCORES;
+                            break;
+                        default :
+                            break;
+                        }
+                }
 
 
-				break;
-			case TEST_1:
+                break;
+            case TEST_1:
+                displayTest1();
 
-				break;
-			case TEST_2:
+                break;
+            case TEST_2:
 
-				break;
-			case TEST_3:
-			    int aye = 0 ;
-			    char aye_string[16];
-			    long int aye_res;
+                break;
+            case TEST_3:
 
+                /*osDelay(1);
+                sprintf(bestRecord_string, "%d", bestRecord);
                 LCD_setCursor(0,1);
-                aye_res = bestRecord * 1000000 + ((TIM2->CNT)/4);
-                sprintf(aye_string, "%d", aye_res);
-                LCD_print(aye_string, sizeof(aye_string));
-			    osDelay(550);
-				break;
-			case SCORES:
-				displayScores();
-				break;
-			default:
-				break;
-	  }
-	  osDelay(1);
+                LCD_print(bestRecord_string, sizeof(bestRecord_string)-1);
+                osDelay(500);*/
+                break;
+            case SCORES:
+                displayScores();
+                break;
+            default:
+                break;
+      }
+      osDelay(1);
   }
   /* USER CODE END gereStateDiagram */
 }
@@ -1240,10 +1277,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == htim2.Instance)
   {
-      //HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
-      //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10,1);
       bestRecord++;
+      osDelay(1);
   }
+
   /* USER CODE END Callback 1 */
 }
 
@@ -1273,7 +1310,6 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
